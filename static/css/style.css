@@ -1,0 +1,180 @@
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #2d211f;
+    color: #f4e7db;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+}
+
+title {
+    color: #d4af37;
+}
+
+.glass-container {
+    position: relative;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0px 8px 32px 0px rgba(31, 38, 135, 0.37);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    max-width: 700px;
+    width: 100%;
+    text-align: center;
+}
+
+h1 {
+    font-size: 2.5rem;
+    color: #f7b560;
+    font-weight: bold;
+}
+
+#question-text {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.option-button {
+    background-color: #f7b560;
+    border: none;
+    border-radius: 25px;
+    padding: 15px;
+    margin: 10px;
+    cursor: pointer;
+    font-size: 1rem;
+    color: #2d211f;
+    transition: background-color 0.3s;
+}
+
+.option-button:hover {
+    background-color: #f9c573;
+}
+
+.product-widget {
+    background: #3d302f;
+    border: 2px solid #444;
+    border-radius: 15px;
+    padding: 1rem;
+    margin: 1rem;
+    width: 45%;
+    display: inline-block;
+    vertical-align: top;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+    text-align: left;
+}
+
+.product-widget h3 {
+    font-size: 1.8rem;
+    color: #f7b560;
+}
+
+.product-widget p {
+    font-size: 1rem;
+    color: #b0b0b0;
+}
+
+.product-widget a {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 10px 15px;
+    background-color: #f7b560;
+    color: #2d211f;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.product-widget a:hover {
+    background-color: #f9c573;
+}
+
+.progress-bar-container {
+    margin-top: 2rem;
+    width: 100%;
+    background-color: #4b3b39;
+    border-radius: 25px;
+    overflow: hidden;
+    height: 15px;
+}
+
+.progress-bar {
+    height: 100%;
+    background-color: #f7b560;
+    width: 0%;
+    transition: width 0.4s ease;
+}
+
+.back-button {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background-color: #f7b560;
+    color: #2d211f;
+    border: none;
+    padding: 10px 20px;
+    font-size: 1rem;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    display: block;
+}
+
+.back-button:hover {
+    background-color: #f9c573;
+}
+
+#result h2 {
+    font-size: 2rem;
+    color: #f0f0f0;
+}
+
+.back-button.final {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background-color: #f7b560;
+    color: #2d211f;
+    border: none;
+    padding: 10px 20px;
+    font-size: 1rem;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    display: block;
+}
+
+.back-button.final:hover {
+    background-color: #f9c573;
+}
+
+.product-widgets {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+/* Only show two product matches on the final slide */
+.product-widget:nth-child(n+3) {
+    display: none;
+}
+
+/* Add "Buy Now" button styles */
+.product-widget .buy-now-button {
+    display: inline-block;
+    margin-top: 15px;
+    padding: 10px 20px;
+    background-color: #d4af37;
+    color: #2d211f;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.product-widget .buy-now-button:hover {
+    background-color: #e0b94e;
+}
