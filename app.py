@@ -1,150 +1,168 @@
-from flask import Flask, request, jsonify
-import sqlite3
 import pandas as pd
+import sqlite3
+from flask import Flask, request, jsonify, render_template
+from sklearn.neighbors import NearestNeighbors
 from sklearn.preprocessing import LabelEncoder
+import os
+import numpy as np
 
-app = Flask(__name__, static_folder='static')
+app = Flask(__name__, template_folder='templates')
 
-# Load the product data from SQLite database
-def load_products():
-    conn = sqlite3.connect('rituals.db')
-    products_df = pd.read_sql_query("SELECT * FROM products", conn)
-    conn.close()
-    return products_df
+# Load data from the database
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+db_path = os.path.join(BASE_DIR, 'Ritualsproduct.db')
 
-# Load products data
-products_df = load_products()
+# Using a context manager to ensure the database connection closes
+with sqlite3.connect(db_path) as conn:
+    # Load products data
+    products = pd.read_sql_query("""
+        SELECT product_id, product_name, collection_id, gender, description, stock_status
+        FROM products
+    """, conn)
+    print("Products Data Loaded:", products.head())  # Debugging step
 
-# Define the categorize functions
-def categorize_scent(description):
-    if pd.isna(description):
-        return 'Other'
-    description_lower = description.lower()
-    if any(keyword in description_lower for keyword in ['floral', 'flower', 'blossom', 'rose', 'peony', 'lotus']):
-        return 'Floral'
-    elif any(keyword in description_lower for keyword in ['fresh', 'mint', 'eucalyptus', 'tea', 'white tea', 'green tea', 'citrus', 'orange']):
-        return 'Fresh'
-    elif any(keyword in description_lower for keyword in ['oriental', 'spice', 'oudh', 'patchouli', 'incense', 'amber']):
-        return 'Oriental'
-    else:
-        return 'Other'
+    # Load notes data
+    notes = pd.read_sql_query("""
+        SELECT note_id, product_id, note
+        FROM notes
+    """, conn)
+    print("Notes Data Loaded:", notes.head())  # Debugging step
 
-def categorize_usage(subcategory):
-    if pd.isna(subcategory):
-        return 'Other'
-    if 'Bath' in subcategory:
-        return 'Bath'
-    elif 'Shower' in subcategory:
-        return 'Shower'
-    elif any(word in subcategory for word in ['Oil', 'Scrub', 'Cream', 'Lotion']):
-        return 'Oil'
-    else:
-        return 'Other'
+    # Load collections data
+    collections = pd.read_sql_query("""
+        SELECT collection_id, collection_name
+        FROM collections
+    """, conn)
+    print("Collections Data Loaded:", collections.head())  # Debugging step
 
-def categorize_effect(description):
-    if pd.isna(description):
-        return 'Other'
-    description_lower = description.lower()
-    if any(keyword in description_lower for keyword in ['relax', 'calm', 'sleep', 'soothing', 'tranquility', 'peaceful', 'balance']):
-        return 'Relaxing'
-    elif any(keyword in description_lower for keyword in ['energize', 'vitality', 'refresh', 'revitalize', 'invigorate', 'stimulate']):
-        return 'Energizing'
-    elif any(keyword in description_lower for keyword in ['detox', 'purify', 'cleanse', 'clarify', 'exfoliate']):
-        return 'Detoxifying'
-    else:
-        return 'Other'
+    # Load prices data
+    prices = pd.read_sql_query("""
+        SELECT price_id, product_id, product_standard_price
+        FROM prices
+    """, conn)
+    print("Prices Data Loaded:", prices.head())  # Debugging step
 
-# Apply the functions to create new columns
-products_df['Scent'] = products_df['Description'].apply(categorize_scent)
-products_df['Usage'] = products_df['Subcategory'].apply(categorize_usage)
-products_df['Effect'] = products_df['Description'].apply(categorize_effect)
+# Merge products with collections, prices, and notes
+df = products.merge(collections, on='collection_id', how='left')
+df = df.merge(prices, on='product_id', how='left')
+df = df.merge(notes, on='product_id', how='left')
+print("Merged DataFrame:", df.head())  # Debugging step
 
-# Initialize and fit the encoders with all possible classes
-le_scent = LabelEncoder()
-le_usage = LabelEncoder()
-le_effect = LabelEncoder()
+# Preprocessing the data for machine learning
+le_gender = LabelEncoder()
+le_price_range = LabelEncoder()
+le_note = LabelEncoder()
 
-# Fit with all possible categories (including those that might come from user input)
-le_scent.fit(['Floral', 'Fresh', 'Oriental', 'Other'])
-le_usage.fit(['Bath', 'Shower', 'Oil', 'Other'])
-le_effect.fit(['Relaxing', 'Energizing', 'Detoxifying', 'Other'])
+# Clean the price data by removing currency symbols and commas, then convert to float
+df['product_standard_price'] = df['product_standard_price'].replace('[^0-9,.]', '', regex=True).str.replace(',', '.').astype(float)
 
-# Encode product features
-products_df['Scent_encoded'] = le_scent.transform(products_df['Scent'])
-products_df['Usage_encoded'] = le_usage.transform(products_df['Usage'])
-products_df['Effect_encoded'] = le_effect.transform(products_df['Effect'])
+# Define price ranges for encoding
+df['price_range'] = df['product_standard_price'].apply(lambda x: 'Low' if x == 17.90 else ('Medium' if x == 49.90 else 'High'))
 
-# Safe transform function to avoid unseen label errors
-def safe_transform(encoder, value, default_value='Other'):
-    if value in encoder.classes_:
-        return encoder.transform([value])[0]
-    else:
-        print(f"Warning: '{value}' not seen during fit, using default value '{default_value}'")
-        return encoder.transform([default_value])[0]
+# Fill missing values
+df['gender'] = df['gender'].fillna('Unknown')
+df['note'] = df['note'].fillna('Unknown')
 
-# The enhanced recommendation function with weighted attributes
-def recommend_products(user_preferences, products_df):
-    # Use safe_transform to avoid unseen label errors
-    user_scent = safe_transform(le_scent, user_preferences['preferred_scent'])
-    user_usage = safe_transform(le_usage, user_preferences['usage'])
-    user_effect = safe_transform(le_effect, user_preferences['desired_effect'])
+# Encoding categorical variables
+df['gender_encoded'] = le_gender.fit_transform(df['gender'].str.strip().str.title().fillna('Unknown'))
+df['price_range_encoded'] = le_price_range.fit_transform(df['price_range'].fillna('Unknown'))
+df['note_encoded'] = le_note.fit_transform(df['note'].str.strip().str.title().fillna('Unknown'))
 
-    # Assign weights to attributes (adjust as needed)
-    weights = {
-        'Scent': 0.5,
-        'Usage': 0.3,
-        'Effect': 0.2
-    }
+# Selecting features for recommendation
+features = df[['gender_encoded', 'price_range_encoded', 'note_encoded']]
 
-    # Calculate weighted similarity
-    products_df['similarity'] = (
-        (products_df['Scent_encoded'] == user_scent).astype(int) * weights['Scent'] +
-        (products_df['Usage_encoded'] == user_usage).astype(int) * weights['Usage'] +
-        (products_df['Effect_encoded'] == user_effect).astype(int) * weights['Effect']
-    )
-
-    # Sort and return top 3 products with highest similarity
-    recommended_products = products_df.sort_values(by=['similarity', 'Price_(EUR)'], ascending=[False, True])
-    return recommended_products.head(3)
+# Initialize and fit NearestNeighbors model
+model = NearestNeighbors(n_neighbors=5, algorithm='auto')
+model.fit(features)
 
 @app.route('/')
 def index():
-    return app.send_static_file('rituals_fully_rendered.html')
+    return render_template('Rituals_app.html')
+
+@app.route('/get_notes', methods=['POST'])
+def get_notes():
+    try:
+        user_input = request.json
+        user_gender = user_input.get('gender', '').strip().title()
+        user_price_point = float(user_input.get('pricePoint', 0))
+
+        filtered_products = df[(df['gender'] == user_gender) & (df['product_standard_price'] == user_price_point)]
+        available_notes = filtered_products['note'].dropna().unique().tolist()
+
+        if available_notes:
+            return jsonify(list(set(available_notes)))
+        else:
+            return jsonify([])
+    except Exception as e:
+        return jsonify({'error': str(e)})
 
 @app.route('/get_recommendation', methods=['POST'])
 def get_recommendation():
-    data = request.get_json()
+    try:
+        user_input = request.json
+        user_gender = user_input['gender'].strip().title()
+        user_price_point = float(user_input['price_point']) if 'price_point' in user_input else None
+        user_notes = [note.strip().title() for note in user_input['note'].split(',')] if 'note' in user_input else []
 
-    # Extract customer inputs
-    user_preferences = {
-        'gender': data['gender'],
-        'skin_type': data['skin_type'],
-        'preferred_scent': data['preferred_scent'],
-        'usage': data['usage'],
-        'desired_effect': data['desired_effect']
-    }
+        # Transform user input using label encoders
+        if user_gender in le_gender.classes_:
+            gender_encoded = le_gender.transform([user_gender])[0]
+        else:
+            gender_encoded = le_gender.transform(['Unknown'])[0]
 
-    # Map numerical inputs back to categorical for encoding
-    gender_mapping = {0: 'Male', 1: 'Female', 2: 'Other'}
-    skin_type_mapping = {0: 'Dry', 1: 'Oily', 2: 'Sensitive'}
-    scent_mapping = {0: 'Floral', 1: 'Fresh', 2: 'Oriental'}
-    usage_mapping = {0: 'Bath', 1: 'Shower', 2: 'Oil'}
-    effect_mapping = {0: 'Relaxing', 1: 'Energizing', 2: 'Detoxifying'}
+        # Define the appropriate price range
+        if user_price_point == 17.90:
+            price_range = 'Low'
+        elif user_price_point == 49.90:
+            price_range = 'Medium'
+        elif user_price_point == 54.90:
+            price_range = 'High'
+        else:
+            return jsonify({'message': 'Invalid price input. Please use one of the available price points: 17.90, 49.90, 54.90.'})
 
-    user_preferences['gender'] = gender_mapping.get(int(user_preferences['gender']), 'Other')
-    user_preferences['skin_type'] = skin_type_mapping.get(int(user_preferences['skin_type']), 'Other')
-    user_preferences['preferred_scent'] = scent_mapping.get(int(user_preferences['preferred_scent']), 'Other')
-    user_preferences['usage'] = usage_mapping.get(int(user_preferences['usage']), 'Other')
-    user_preferences['desired_effect'] = effect_mapping.get(int(user_preferences['desired_effect']), 'Other')
+        # Transform the price range
+        if price_range in le_price_range.classes_:
+            price_range_encoded = le_price_range.transform([price_range])[0]
+        else:
+            price_range_encoded = le_price_range.transform(['Unknown'])[0]
 
-    # Get recommendations
-    recommendations = recommend_products(user_preferences, products_df)
+        # Handle multiple notes and find products that match any of the given notes
+        note_encoded_list = []
+        for note in user_notes:
+            if note in le_note.classes_:
+                note_encoded_list.append(le_note.transform([note])[0])
+            else:
+                note_encoded_list.append(le_note.transform(['Unknown'])[0])
 
-    # Convert the recommendations to a list of dictionaries
-    recommended_products = recommendations[['Product_Name', 'Description', 'Price_(EUR)', 'Category', 'Subcategory', 'Collection']].to_dict('records')
+        recommendations = []
+        for note_encoded in note_encoded_list:
+            user_vector = [[gender_encoded, price_range_encoded, note_encoded]]
 
-    # Return the recommended products as JSON
-    return jsonify(recommended_products)
+            # Find nearest neighbors
+            distances, indices = model.kneighbors(user_vector)
+
+            # Retrieve recommended products from the original DataFrame
+            recommended_products = df.iloc[indices[0]]
+
+            if not recommended_products.empty:
+                for _, product in recommended_products.iterrows():
+                    recommendations.append({
+                        'Product_Name': product['product_name'],
+                        'Collection': product['collection_name'],
+                        'Notes': product['note'],
+                        'Description': product['description'],
+                        'Price_(EUR)': product['product_standard_price']
+                    })
+
+        unique_recommendations = {rec['Product_Name']: rec for rec in recommendations}.values()
+
+        if unique_recommendations:
+            return jsonify(list(unique_recommendations)[:4])
+        else:
+            return jsonify({'message': 'No products found matching the criteria.'})
+
+    except Exception as e:
+        return jsonify({'error': str(e)})
 
 if __name__ == '__main__':
     app.run(debug=True)

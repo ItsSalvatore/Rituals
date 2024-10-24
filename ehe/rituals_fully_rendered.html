@@ -1177,9 +1177,9 @@ Below you will obtain all information about the cookies we use. You can activate
             </div>
         </div>
     </div>
-
+    
     <div id="overlay" class="overlay"></div>
-
+    
     <style>
         /* Quiz Popup Container */
         .quiz-container {
@@ -1198,7 +1198,7 @@ Below you will obtain all information about the cookies we use. You can activate
             padding: 20px;
             font-family: 'Playfair Display', serif;
         }
-
+    
         /* Overlay */
         .overlay {
             position: fixed;
@@ -1210,7 +1210,7 @@ Below you will obtain all information about the cookies we use. You can activate
             z-index: 1000;
             display: none; /* Hidden by default */
         }
-
+    
         /* Quiz Header */
         .quiz-header {
             background-color: #e1d8c8;
@@ -1222,13 +1222,13 @@ Below you will obtain all information about the cookies we use. You can activate
             border-top-right-radius: 20px;
             font-weight: 700;
         }
-
+    
         /* Close button */
         #close-quiz {
             float: right;
             cursor: pointer;
         }
-
+    
         /* Quiz Content */
         .quiz-content {
             padding: 20px;
@@ -1237,7 +1237,7 @@ Below you will obtain all information about the cookies we use. You can activate
             font-family: 'Roboto', sans-serif;
             color: #333;
         }
-
+    
         /* Option Buttons */
         .option-button {
             display: block;
@@ -1252,11 +1252,11 @@ Below you will obtain all information about the cookies we use. You can activate
             font-size: 1em;
             transition: background-color 0.3s ease;
         }
-
+    
         .option-button:hover {
             background-color: #d2c5b4;
         }
-
+    
         /* Back Button */
         .back-button {
             background-color: #b8a089;
@@ -1268,7 +1268,7 @@ Below you will obtain all information about the cookies we use. You can activate
             margin-top: 20px;
             font-family: 'Roboto', sans-serif;
         }
-
+    
         /* Progress Bar Container */
         .progress-bar-container {
             background-color: #f3f3f3;
@@ -1276,7 +1276,7 @@ Below you will obtain all information about the cookies we use. You can activate
             height: 20px;
             margin-top: 20px;
         }
-
+    
         /* Progress Bar */
         .progress-bar {
             background-color: #b8a089;
@@ -1284,7 +1284,7 @@ Below you will obtain all information about the cookies we use. You can activate
             width: 0;
             border-radius: 10px;
         }
-
+    
         /* Product Card */
         .product-card {
             display: flex;
@@ -1295,7 +1295,7 @@ Below you will obtain all information about the cookies we use. You can activate
             margin: 20px 0;
             padding: 20px;
         }
-
+    
         .product-image {
             background-color: #333;
             color: #fff;
@@ -1308,11 +1308,11 @@ Below you will obtain all information about the cookies we use. You can activate
             font-weight: bold;
             text-align: center;
         }
-
+    
         .product-info {
             flex: 1;
         }
-
+    
         .buy-now-button {
             background-color: #b8a089;
             color: #fff;
@@ -1324,41 +1324,21 @@ Below you will obtain all information about the cookies we use. You can activate
             text-transform: uppercase;
         }
     </style>
-
+    
     <script>
         let currentStep = 0;
         let answers = {};
-
+    
         // All questions and their options (step-based)
         const questions = [
-            {
-                question: "Select your gender:",
-                type: "buttons",
-                options: [
-                    { text: "Male", value: 0 },
-                    { text: "Female", value: 1 },
-                    { text: "Other", value: 2 }
-                ],
-                key: "gender"
-            },
-            {
-                question: "Select your skin type:",
-                type: "buttons",
-                options: [
-                    { text: "Dry", value: 0 },
-                    { text: "Oily", value: 1 },
-                    { text: "Sensitive", value: 2 }
-                ],
-                key: "skin_type"
-            },
             {
                 question: "Select your preferred scent:",
                 type: "buttons",
                 options: [
-                    { text: "Floral", value: 0 },
-                    { text: "Fresh", value: 1 },
-                    { text: "Oriental", value: 2 },
-                    { text: "Other", value: 3 }
+                    { text: "Floral", value: 'Floral' },
+                    { text: "Fresh", value: 'Fresh' },
+                    { text: "Oriental", value: 'Oriental' },
+                    { text: "Other", value: 'Other' }
                 ],
                 key: "preferred_scent"
             },
@@ -1366,10 +1346,10 @@ Below you will obtain all information about the cookies we use. You can activate
                 question: "How do you prefer to use the product?",
                 type: "buttons",
                 options: [
-                    { text: "Bath", value: 0 },
-                    { text: "Shower", value: 1 },
-                    { text: "Oil/Cream", value: 2 },
-                    { text: "Other", value: 3 }
+                    { text: "Bath", value: 'Bath' },
+                    { text: "Shower", value: 'Shower' },
+                    { text: "Oil/Cream", value: 'Oil' },
+                    { text: "Other", value: 'Other' }
                 ],
                 key: "usage"
             },
@@ -1377,27 +1357,27 @@ Below you will obtain all information about the cookies we use. You can activate
                 question: "What is the desired effect?",
                 type: "buttons",
                 options: [
-                    { text: "Relaxing", value: 0 },
-                    { text: "Energizing", value: 1 },
-                    { text: "Detoxifying", value: 2 },
-                    { text: "Other", value: 3 }
+                    { text: "Relaxing", value: 'Relaxing' },
+                    { text: "Energizing", value: 'Energizing' },
+                    { text: "Detoxifying", value: 'Detoxifying' },
+                    { text: "Other", value: 'Other' }
                 ],
                 key: "desired_effect"
             }
         ];
-
+    
         // Function to load each question
         function loadQuestion(stepIndex) {
             const questionContainer = document.getElementById("question-text");
             const answerOptions = document.getElementById("answer-options");
             const backButton = document.getElementById("back-button");
-
+    
             // Clear previous options
             answerOptions.innerHTML = "";
-
+    
             const question = questions[stepIndex];
             questionContainer.innerText = question.question;
-
+    
             // Create buttons for the answers
             question.options.forEach(option => {
                 const button = document.createElement("button");
@@ -1406,31 +1386,31 @@ Below you will obtain all information about the cookies we use. You can activate
                 button.classList.add("option-button");
                 answerOptions.appendChild(button);
             });
-
+    
             // Show or hide back button
             if (stepIndex > 0) {
                 backButton.style.display = "inline-block";
             } else {
                 backButton.style.display = "none";
             }
-
+    
             // Update progress bar
             updateProgressBar(stepIndex);
         }
-
+    
         // Function to store answer and move to the next question
         function selectAnswer(answer) {
             const questionKey = questions[currentStep].key;
             answers[questionKey] = answer;
-
+    
             // Move to next question
             nextQuestion();
         }
-
+    
         // Function to proceed to the next question
         function nextQuestion() {
             currentStep++;
-
+    
             if (currentStep < questions.length) {
                 // Load the next question
                 loadQuestion(currentStep);
@@ -1439,7 +1419,7 @@ Below you will obtain all information about the cookies we use. You can activate
                 submitQuiz();
             }
         }
-
+    
         // Function to go back to the previous question
         function goBack() {
             if (currentStep > 0) {
@@ -1447,7 +1427,7 @@ Below you will obtain all information about the cookies we use. You can activate
                 loadQuestion(currentStep);
             }
         }
-
+    
         // Function to submit the answers to the backend
         function submitQuiz() {
             fetch('/get_recommendation', {
@@ -1487,25 +1467,26 @@ Below you will obtain all information about the cookies we use. You can activate
                 console.error('Error:', error);
             });
         }
-
+    
         // Function to update the progress bar
         function updateProgressBar(stepIndex) {
             const progressBar = document.querySelector('.progress-bar');
             const progress = ((stepIndex + 1) / questions.length) * 100;
             progressBar.style.width = `${progress}%`;
         }
-
+    
         // Start the quiz on page load
         window.onload = function () {
             document.getElementById('quiz-popup').style.display = 'flex';
             document.getElementById('overlay').style.display = 'block';
             loadQuestion(currentStep);
         };
-
+    
         // Function to close the quiz
         function closeQuiz() {
             document.getElementById('quiz-popup').style.display = 'none';
             document.getElementById('overlay').style.display = 'none';
         }
     </script>
+    
   </body></html>
