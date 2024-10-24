@@ -1,0 +1,45 @@
+# Python general files
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+.env
+.venv
+instance/
+
+# Flask specific
+*.sqlite3
+*.log
+*.env
+config.py
+settings.py
+
+# IDE and OS-generated files
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Gunicorn logs
+*.log
+
+# Vercel related
+dist/
+*.vercel/
+*.vercel_build_output/
+
+# Static and uploaded files
+static/*
+!static/image.png  # Keep your uploaded background image
+uploads/
+
+# Virtual Environment
+venv/
+
+# Node related (for Vercel and local builds)
+node_modules/
+
+# Keep the database file
+!Ritualsproduct.db
