@@ -8,7 +8,8 @@
     <style>
         body {
             font-family: 'Roboto', sans-serif;
-            background-color: #f5f4f1;
+            background: url('/static/image.png') no-repeat center center fixed;
+            background-size: cover;
             color: #333;
             margin: 0;
             padding: 0;
@@ -20,7 +21,7 @@
             transform: translate(-50%, -50%);
             width: 1000px;
             max-width: 90%;
-            background-color: #f5f4f1;
+            background-color: rgba(245, 244, 241, 0.9); /* Adding transparency to the quiz container */
             border-radius: 20px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
             display: flex;
@@ -143,6 +144,7 @@
     </div>
 
     <script>
+        // JavaScript code remains unchanged for the quiz functionality
         let currentStep = 0;
         let answers = {};
 
@@ -253,7 +255,7 @@
                 if (Array.isArray(data) && data.length > 0) {
                     const productGrid = document.createElement("div");
                     productGrid.classList.add("product-grid");
-                    data.slice(0, 2).forEach(product => {
+                    data.slice(0, 2).forEach(product => { // Limit recommendations to 2 products
                         const productCard = document.createElement("div");
                         productCard.classList.add("product-card");
                         productCard.innerHTML = `
